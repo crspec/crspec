@@ -7,12 +7,12 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   id-token: write
 
 jobs:
   release:
-    name: Build & Release RubyGem
+    name: Build & Release RubyGem via Trusted Publishing
     runs-on: ubuntu-latest
 
     steps:
@@ -24,15 +24,5 @@ jobs:
           ruby-version: '3.3'
           bundler-cache: true
 
-      - name: Build Gem
-        run: gem build crspec.gemspec
-
       - name: Publish to RubyGems
-        env:
-          GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
-        run: |
-          mkdir -p ~/.gem
-          touch ~/.gem/credentials
-          chmod 0600 ~/.gem/credentials
-          printf "---\n:rubygems_api_key: %s\n" "$GEM_HOST_API_KEY" > ~/.gem/credentials
-          gem push *.gem
+        uses: rubygems/release-gem@v1
