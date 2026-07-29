@@ -25,8 +25,7 @@ jobs:
           - '3.3'
           - '3.4'
           - '4.0'
-          - 'head'
-          - 'jruby-9.4'
+          - 'jruby-10.1.1.0'
 
     steps:
       - uses: actions/checkout@v4
