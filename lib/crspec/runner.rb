@@ -2,13 +2,15 @@
 
 require "etc"
 require_relative "execution_context"
+require_relative "formatters/progress_formatter"
 
 module Crspec
   class Runner
-    attr_reader :concurrency, :passed_examples, :failed_examples, :total_duration
+    attr_reader :concurrency, :passed_examples, :failed_examples, :total_duration, :formatter
 
-    def initialize(concurrency: Etc.nprocessors)
+    def initialize(concurrency: Etc.nprocessors, formatter: nil)
       @concurrency = concurrency
+      @formatter = formatter || Formatters::ProgressFormatter.new
       @queue = Thread::Queue.new
       @passed_examples = []
       @failed_examples = []
@@ -18,6 +20,7 @@ module Crspec
 
     def run(example_groups)
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      @formatter.start
       example_groups.each { |group| enqueue_examples(group) }
 
       workers = Array.new(@concurrency) do |worker_idx|
@@ -43,6 +46,7 @@ module Crspec
 
       workers.each(&:join)
       @total_duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
+      @formatter.finish
       self
     end
 
@@ -80,8 +84,12 @@ module Crspec
       @mutex.synchronize do
         if example.status == :passed
           @passed_examples << example
+          @formatter.example_passed(example)
+        elsif example.status == :pending
+          @formatter.example_pending(example)
         else
           @failed_examples << example
+          @formatter.example_failed(example)
         end
       end
     end

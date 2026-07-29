@@ -3,5 +3,6 @@
 
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "crspec"
+require "crspec/transpiler/cli"
 
 Crspec::Transpiler::CLI.run(ARGV)

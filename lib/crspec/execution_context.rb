@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "securerandom"
+require "monitor"
 
 module Crspec
   class ExecutionContext
@@ -27,21 +28,33 @@ module Crspec
       @metadata = metadata.freeze
       @parent = parent
       @memoized_values = {}
-      @mutex = Mutex.new
+      @monitor = Monitor.new
     end
 
     def fetch_memoized(key, &block)
       return @memoized_values[key] if @memoized_values.key?(key)
 
-      @mutex.synchronize do
+      @monitor.synchronize do
         return @memoized_values[key] if @memoized_values.key?(key)
 
         @memoized_values[key] = block.call
       end
     end
 
+    def [](key)
+      @monitor.synchronize do
+        @memoized_values[key]
+      end
+    end
+
+    def []=(key, value)
+      @monitor.synchronize do
+        @memoized_values[key] = value
+      end
+    end
+
     def reset!
-      @mutex.synchronize do
+      @monitor.synchronize do
         @memoized_values.clear
       end
     end

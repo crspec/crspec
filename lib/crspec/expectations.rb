@@ -34,8 +34,11 @@ module Crspec
   module Expectations
     include Matchers
 
-    def expect(value = nil, &block)
-      ExpectationTarget.new(value || block)
+    UNDEFINED = Object.new.freeze
+
+    def expect(value = UNDEFINED, &block)
+      actual = value.equal?(UNDEFINED) ? block : value
+      ExpectationTarget.new(actual)
     end
   end
 end

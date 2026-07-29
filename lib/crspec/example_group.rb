@@ -120,16 +120,22 @@ module Crspec
           @__crspec_example__ = example
         end
 
+        def execution_context
+          ExecutionContext.current
+        end
+        alias current_context execution_context
+
         def described_class
           nil
         end
       end
 
       lets = ancestor_let_blocks
-      lets.each do |name, block|
-        klass.define_method(name) do
-          ExecutionContext.current.fetch_memoized(name) do
-            instance_exec(&block)
+      lets.each do |let_name, let_proc|
+        current_proc = let_proc
+        klass.define_method(let_name) do
+          ExecutionContext.current.fetch_memoized(let_name) do
+            instance_exec(&current_proc)
           end
         end
       end

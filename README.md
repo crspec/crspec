@@ -41,10 +41,6 @@ Crspec.describe User, type: :model do
   let(:valid_attributes) { { name: "Jane Doe", email: "jane@example.com" } }
   subject(:user) { User.new(valid_attributes) }
 
-  before do
-    Fiber[:trace_id] = "TX-#{SecureRandom.hex(4)}"
-  end
-
   it "validates primary attributes" do
     expect(user.valid?).to be(true)
   end
@@ -66,6 +62,21 @@ end
 - `include(*items)`
 - `raise_error(ExceptionClass, "message")`
 - `respond_to(*methods)`
+
+### Advanced: Execution Context & Extensions
+Regular spec authors do not need to interact with `execution_context` at all—`crspec` automatically isolates `let` memoization, database connections, and stubs invisibly per test.
+
+For gem developers, middleware, or custom test extension authors needing request tracing across child fibers, `execution_context` (or `current_context`) provides an encapsulated, thread-safe store:
+
+```ruby
+before do
+  execution_context[:trace_id] = "TX-12345"
+end
+
+it "reads execution context metadata" do
+  expect(execution_context[:trace_id]).to eq("TX-12345")
+end
+```
 
 ---
 

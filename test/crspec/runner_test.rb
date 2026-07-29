@@ -20,7 +20,8 @@ class RunnerTest < Minitest::Test
       end
     end
 
-    runner = Crspec::Runner.new(concurrency: 2)
+    formatter = Crspec::Formatters::NullFormatter.new
+    runner = Crspec::Runner.new(concurrency: 2, formatter: formatter)
     runner.run([group])
 
     assert runner.success?
@@ -35,11 +36,33 @@ class RunnerTest < Minitest::Test
       end
     end
 
-    runner = Crspec::Runner.new(concurrency: 1)
+    formatter = Crspec::Formatters::NullFormatter.new
+    runner = Crspec::Runner.new(concurrency: 1, formatter: formatter)
     runner.run([group])
 
     refute runner.success?
     assert_equal 1, runner.failed_examples.size
     assert_equal "Expected 2, got 1", runner.failed_examples.first.error.message
+  end
+
+  def test_progress_formatter_output
+    out = StringIO.new
+    formatter = Crspec::Formatters::ProgressFormatter.new(out, color: false)
+
+    group = Crspec.describe "Formatter Suite" do
+      it "passes" do
+        expect(1).to eq(1)
+      end
+
+      it "fails" do
+        expect(1).to eq(2)
+      end
+    end
+
+    runner = Crspec::Runner.new(concurrency: 1, formatter: formatter)
+    runner.run([group])
+
+    assert_includes out.string, "."
+    assert_includes out.string, "F"
   end
 end
