@@ -10,7 +10,8 @@ Crspec.describe "BookStore System Server", type: :system do
 
     expect(Crspec::Rails::SystemServer.running?).to be(true)
 
-    uri = URI("http://127.0.0.1:9889/")
+    port = Crspec::Rails::SystemServer.effective_port(9889)
+    uri = URI("http://127.0.0.1:#{port}/")
     res = Net::HTTP.get_response(uri)
     expect(res.code).to eq("200")
     expect(res.body).to include("Welcome to BookStore")

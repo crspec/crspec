@@ -27,7 +27,20 @@ module Crspec
         @doubles = []
         @stubs = Hash.new { |h, k| h[k] = {} }
         @expectations = []
+        @calls = Hash.new { |h, k| h[k] = [] }
         @mutex = Mutex.new
+      end
+
+      def record_call(target, method_name, args, kwargs)
+        @mutex.synchronize do
+          @calls[[target.object_id, method_name.to_sym]] << [args, kwargs]
+        end
+      end
+
+      def calls_for(target, method_name)
+        @mutex.synchronize do
+          @calls[[target.object_id, method_name.to_sym]].dup
+        end
       end
 
       def register_stub(target, method_name, implementation)
@@ -66,6 +79,7 @@ module Crspec
           @stubs.clear
           @doubles.clear
           @expectations.clear
+          @calls.clear
         end
       end
 

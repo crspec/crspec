@@ -14,13 +14,17 @@ module Crspec
     end
 
     def self.isolate(example_id, metadata = {})
-      parent_context = Fiber[STORAGE_KEY]
-      new_context = new(example_id, metadata, parent_context)
-
-      # Fiber storage inheritance preserves context while isolating mutations
-      Fiber.new(storage: { STORAGE_KEY => new_context }) do
+      new_context = new(example_id, metadata, Fiber[STORAGE_KEY])
+      old_context = Fiber[STORAGE_KEY]
+      old_space = Fiber[Mock::Space::STORAGE_KEY]
+      Fiber[STORAGE_KEY] = new_context
+      Fiber[Mock::Space::STORAGE_KEY] = nil
+      begin
         yield new_context
-      end.resume
+      ensure
+        Fiber[STORAGE_KEY] = old_context
+        Fiber[Mock::Space::STORAGE_KEY] = old_space
+      end
     end
 
     def initialize(example_id, metadata = {}, parent = nil)

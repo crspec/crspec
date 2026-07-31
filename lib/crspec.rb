@@ -5,13 +5,17 @@ require_relative "crspec/configuration"
 require_relative "crspec/execution_context"
 require_relative "crspec/matchers"
 require_relative "crspec/expectations"
+require_relative "crspec/file_fixtures"
 require_relative "crspec/example"
+require_relative "crspec/shared_examples"
 require_relative "crspec/example_group"
 require_relative "crspec/mock/interceptor"
 require_relative "crspec/mock/space"
 require_relative "crspec/mock/double"
 require_relative "crspec/formatters/progress_formatter"
+require_relative "crspec/status_persistence"
 require_relative "crspec/runner"
+require_relative "crspec/process_runner"
 require_relative "crspec/dsl"
 require_relative "crspec/rails/database_isolation"
 require_relative "crspec/rails/system_server"
@@ -24,3 +28,5 @@ require_relative "crspec/generators/init"
 module Crspec
   class Error < StandardError; end
 end
+
+RSpec = Crspec unless defined?(RSpec)

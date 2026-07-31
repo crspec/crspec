@@ -166,7 +166,7 @@ Configure worker counts and setup/teardown hooks:
 ```ruby
 Crspec::Rails::Parallel.parallelize(workers: 4) do
   parallelize_setup do |worker_number|
-    puts "Worker #{worker_number} starting (TEST_ENV_NUMBER=#{ENV['TEST_ENV_NUMBER']})"
+    puts "Worker #{worker_number} starting"
   end
 
   parallelize_teardown do |worker_number|

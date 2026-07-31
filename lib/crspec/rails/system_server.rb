@@ -5,7 +5,14 @@ require "etc"
 module Crspec
   module Rails
     class SystemServer
+      # The effective port is offset by TEST_ENV_NUMBER so concurrent
+      # --processes children never collide on the same listener.
+      def self.effective_port(port)
+        port + ENV.fetch("TEST_ENV_NUMBER", "").to_i
+      end
+
       def self.start_concurrent_server!(app = nil, port = 9887)
+        port = effective_port(port)
         @server_mutex ||= Mutex.new
         @server_mutex.synchronize do
           return if @running
