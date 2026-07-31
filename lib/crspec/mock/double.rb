@@ -270,7 +270,14 @@ module Crspec
       end
 
       def instance_double(target_class, name = nil, stubs = {})
-        Double.new(name || target_class.name, stubs)
+        double_name = if target_class.is_a?(String) || target_class.is_a?(Symbol)
+                        target_class.to_s
+                      elsif target_class.respond_to?(:name)
+                        target_class.name
+                      else
+                        target_class.to_s
+                      end
+        Double.new(name || double_name, stubs)
       end
 
       def allow(target)

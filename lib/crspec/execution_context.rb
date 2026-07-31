@@ -37,7 +37,7 @@ module Crspec
       @monitor.synchronize do
         return @memoized_values[key] if @memoized_values.key?(key)
 
-        @memoized_values[key] = block.call
+        @memoized_values[key] = yield
       end
     end
 

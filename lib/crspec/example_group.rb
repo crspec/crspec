@@ -3,6 +3,7 @@
 require_relative "expectations"
 require_relative "example"
 require_relative "mock/double"
+require_relative "configuration"
 
 module Crspec
   class ExampleGroup
@@ -21,6 +22,7 @@ module Crspec
       @after_hooks = []
       @let_blocks = {}
       @eager_lets = []
+      @included_modules = []
     end
 
     def self.define(description, metadata = {}, parent = nil, &block)
@@ -42,6 +44,10 @@ module Crspec
       example
     end
     alias specify it
+
+    def include(mod)
+      @included_modules << mod
+    end
 
     def let(name, &block)
       @let_blocks[name.to_sym] = block
@@ -71,6 +77,8 @@ module Crspec
 
     def ancestor_hooks(type)
       hooks = []
+      hooks.concat(Crspec.configuration.before_hooks) if type == :before
+
       curr = self
       ancestors = []
       while curr
@@ -82,6 +90,9 @@ module Crspec
         list = type == :before ? grp.before_hooks : grp.after_hooks
         hooks.concat(list)
       end
+
+      hooks.concat(Crspec.configuration.after_hooks) if type == :after
+
       hooks
     end
 
@@ -109,10 +120,30 @@ module Crspec
       eager
     end
 
+    def ancestor_included_modules
+      mods = []
+      curr = self
+      ancestors = []
+      while curr
+        ancestors.unshift(curr)
+        curr = curr.parent
+      end
+      ancestors.each do |grp|
+        mods.concat(grp.instance_variable_get(:@included_modules) || [])
+      end
+      mods
+    end
+
     def create_instance(example)
+      modules_to_include = (Crspec.configuration.included_modules + ancestor_included_modules).uniq
+
       klass = Class.new do
         include Expectations
         include Mock::DSL
+
+        modules_to_include.each do |mod|
+          include mod
+        end
 
         attr_reader :__crspec_example__
 

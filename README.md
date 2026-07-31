@@ -8,9 +8,10 @@
 
 - **Fiber Storage Context Isolation**: Solves legacy thread-local (`Thread.current`) state leakage by routing all execution metadata and `let` memoization through inherited Fiber storage (`Fiber[:crspec_execution_context]`).
 - **Fiber-Aware Mocking (`crspec-mock`)**: Prevents mock registry corruption across parallel tests using prepended method interceptors bound to `Fiber[:crspec_mock_space]`.
-- **Rails Connection Leasing & Parallel Testing (`crspec-rails`)**: Leases database connections per example fiber (`ActiveRecord::Base.lease_connection`), handles savepoint transaction strategies (`SAVEPOINT ex_root`), and integrates with Rails parallel worker suites (`Crspec::Rails::Parallel`).
+- **Rails Integration & ActiveSupport Reuse (`crspec-rails`)**: Direct integration with `ActiveSupport::Testing::Assertions`, `ActiveSupport::Testing::TimeHelpers`, and `ActiveSupport::Testing::FileFixtures`. Leases database connections per example fiber (`ActiveRecord::Base.lease_connection`), handles savepoint transaction strategies (`SAVEPOINT ex_root`), and integrates with Rails parallel worker suites (`Crspec::Rails::Parallel`).
+- **Rails Request Specs**: Expressive HTTP request verb helpers (`get`, `post`, `put`, `patch`, `delete`), response status inspection (`response.status`), headers, and `json_response` parsing.
 - **Prism-Based AST Transpiler (`crspec-transpiler`)**: Automated migration tool using `ruby/prism` C-parser to convert existing RSpec codebases to Crspec syntax and flag thread-unsafe constructs like `before(:all)`.
-- **Concurrent Execution Kernel**: Multi-threaded worker pool integrated with non-blocking fiber schedulers (`Async::Scheduler`).
+- **Concurrent Execution Kernel**: Multi-threaded worker pool integrated with real-time progress dot formatting and non-blocking fiber schedulers (`Async::Scheduler`).
 
 ---
 
@@ -30,12 +31,30 @@ mise exec -- bundle install
 
 ---
 
+## Spec Helpers & Generator
+
+Initialize standard `spec_helper.rb` (and `rails_helper.rb` if run within a Rails project):
+
+```bash
+mise exec -- crspec --init
+```
+
+Spec files include helpers explicitly via standard `require` statements:
+
+```ruby
+require "spec_helper"
+# or
+require "rails_helper"
+```
+
+---
+
 ## Writing Specs
 
 `crspec` provides a familiar RSpec-style DSL for structuring example groups and expectations:
 
 ```ruby
-require "crspec"
+require "spec_helper"
 
 Crspec.describe User, type: :model do
   let(:valid_attributes) { { name: "Jane Doe", email: "jane@example.com" } }
@@ -43,6 +62,12 @@ Crspec.describe User, type: :model do
 
   it "validates primary attributes" do
     expect(user.valid?).to be(true)
+  end
+
+  it "changes user count when created" do
+    expect {
+      User.create!(valid_attributes)
+    }.to change(User, :count).by(1)
   end
 
   context "when email is omitted" do
@@ -62,6 +87,7 @@ end
 - `include(*items)`
 - `raise_error(ExceptionClass, "message")`
 - `respond_to(*methods)`
+- `change(receiver, :method).by(amount)` / `change { ... }.by(amount)` / `.from(val).to(val)`
 
 ### Advanced: Execution Context & Extensions
 Regular spec authors do not need to interact with `execution_context` at all—`crspec` automatically isolates `let` memoization, database connections, and stubs invisibly per test.
@@ -90,7 +116,7 @@ Crspec.describe PaymentGateway do
 
   it "stubs credit card processing concurrently" do
     allow(stripe_client).to receive(:create).with(amount: 5000).and_return(status: "succeeded")
-    
+
     result = stripe_client.create(amount: 5000)
     expect(result[:status]).to eq("succeeded")
   end
@@ -99,15 +125,37 @@ end
 
 ---
 
-## Rails Concurrency & Parallel Testing (`crspec-rails`)
+## Rails Concurrency & Request Specs (`crspec-rails`)
 
 ### Database Isolation & Connection Leasing
-Wrap examples in connection leasing and transaction savepoints:
+`rails_helper.rb` automatically configures database-independent transaction isolation using your application's `config/database.yml`:
 
 ```ruby
-Crspec.describe User, type: :model do
-  around do |example|
-    Crspec::Rails::DatabaseIsolation.wrap_example(example)
+Crspec.configure do |config|
+  config.use_transactional_fixtures = true
+  config.infer_spec_type_from_file_location!
+  config.include(Crspec::Rails::RequestHelpers)
+
+  config.around(:each) do |example|
+    if defined?(ActiveRecord::Base) && config.use_transactional_fixtures
+      Crspec::Rails::DatabaseIsolation.wrap_example(example)
+    else
+      example.execute!
+    end
+  end
+end
+```
+
+### Request Specs
+Perform full REST API controller testing with built-in request helpers:
+
+```ruby
+Crspec.describe "Books API", type: :request do
+  it "creates a book via POST" do
+    post "/books", params: { name: "Refactoring", author: "Martin Fowler" }
+
+    expect(response.status).to eq(201)
+    expect(json_response[:name]).to eq("Refactoring")
   end
 end
 ```
@@ -118,7 +166,6 @@ Configure worker counts and setup/teardown hooks:
 ```ruby
 Crspec::Rails::Parallel.parallelize(workers: 4) do
   parallelize_setup do |worker_number|
-    # Prepare worker database, seed data, etc.
     puts "Worker #{worker_number} starting (TEST_ENV_NUMBER=#{ENV['TEST_ENV_NUMBER']})"
   end
 
@@ -126,13 +173,6 @@ Crspec::Rails::Parallel.parallelize(workers: 4) do
     puts "Worker #{worker_number} tearing down"
   end
 end
-```
-
-### Multi-Fiber Integration Server
-Boot an embedded multi-threaded/multi-fiber Puma server for system/browser specs:
-
-```ruby
-Crspec::Rails::SystemServer.start_concurrent_server!(Rails.application, 9887)
 ```
 
 ---
@@ -147,6 +187,16 @@ mise exec -- crspec-transpile --analyze spec/
 
 # 2. Automatically transpile RSpec code to Crspec syntax in-place
 mise exec -- crspec-transpile --write spec/
+```
+
+---
+
+## Sample Rails Bookstore App
+
+Explore the working sample Rails application in [`samples/book_store`](file:///Users/tachyons/code/crspec/samples/book_store):
+
+```bash
+mise exec -- ./exe/crspec samples/book_store/spec/
 ```
 
 ---

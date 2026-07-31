@@ -168,6 +168,57 @@ module Crspec
       end
     end
 
+    class ChangeMatcher < BaseMatcher
+      def initialize(receiver = nil, message = nil, &block)
+        super()
+        @receiver = receiver
+        @message = message
+        @block = block || -> { receiver.send(message) }
+        @expected_by = nil
+        @expected_from = nil
+        @expected_to = nil
+      end
+
+      def by(amount)
+        @expected_by = amount
+        self
+      end
+
+      def from(val)
+        @expected_from = val
+        self
+      end
+
+      def to(val)
+        @expected_to = val
+        self
+      end
+
+      def matches?(proc_to_run)
+        @before_val = @block.call
+        proc_to_run.call
+        @after_val = @block.call
+
+        if @expected_by
+          (@after_val - @before_val) == @expected_by
+        elsif !@expected_from.nil? && !@expected_to.nil?
+          @before_val == @expected_from && @after_val == @expected_to
+        elsif !@expected_to.nil?
+          @after_val == @expected_to
+        else
+          @before_val != @after_val
+        end
+      end
+
+      def failure_message
+        if @expected_by
+          "Expected result to change by #{@expected_by}, but changed by #{@after_val - @before_val} (from #{@before_val.inspect} to #{@after_val.inspect})"
+        else
+          "Expected result to change, but remained #{@before_val.inspect}"
+        end
+      end
+    end
+
     def eq(expected)
       EqMatcher.new(expected)
     end
@@ -198,6 +249,10 @@ module Crspec
 
     def respond_to(*methods)
       RespondToMatcher.new(*methods)
+    end
+
+    def change(receiver = nil, message = nil, &block)
+      ChangeMatcher.new(receiver, message, &block)
     end
   end
 end

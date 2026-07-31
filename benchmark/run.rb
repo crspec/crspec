@@ -10,11 +10,11 @@ require "stringio"
 
 NUMBER_OF_TESTS = 100
 
-puts "=========================================================================="
-puts "  Crspec vs RSpec vs Minitest Benchmark Suite"
-puts "  Test Workload: #{NUMBER_OF_TESTS} examples per framework"
-puts "  Evaluating Default Native Framework Runners (No Manual Concurrency Controls)"
-puts "=========================================================================="
+Rails.logger.debug "=========================================================================="
+Rails.logger.debug "  Crspec vs RSpec vs Minitest Benchmark Suite"
+Rails.logger.debug { "  Test Workload: #{NUMBER_OF_TESTS} examples per framework" }
+Rails.logger.debug "  Evaluating Default Native Framework Runners (No Manual Concurrency Controls)"
+Rails.logger.debug "=========================================================================="
 
 results = {}
 null_formatter = Crspec::Formatters::NullFormatter.new
@@ -60,13 +60,13 @@ results["Minitest (Native Default Runner)"] = t1 - t0
 # -----------------------------------------------------------------------------
 # Summary Output
 # -----------------------------------------------------------------------------
-puts "\nResults Summary:"
-puts format("%-45s | %-12s | %-15s", "Framework Engine", "Duration (s)", "Throughput (ops/s)")
-puts "-" * 78
+Rails.logger.debug "\nResults Summary:"
+Rails.logger.debug format("%-45s | %-12s | %-15s", "Framework Engine", "Duration (s)", "Throughput (ops/s)")
+Rails.logger.debug "-" * 78
 
 results.each do |engine, duration|
   throughput = (NUMBER_OF_TESTS / duration).round(2)
-  puts format("%-45s | %-12.4f | %-15.2f", engine, duration, throughput)
+  Rails.logger.debug format("%-45s | %-12.4f | %-15.2f", engine, duration, throughput)
 end
 
-puts "=" * 78
+Rails.logger.debug "=" * 78

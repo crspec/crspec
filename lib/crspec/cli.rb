@@ -2,6 +2,7 @@
 
 require "optparse"
 require_relative "../crspec"
+require_relative "generators/init"
 
 module Crspec
   class CLI
@@ -11,14 +12,30 @@ module Crspec
 
     def initialize(args)
       @args = args
-      @concurrency = Etc.nprocessors
+      @concurrency = Crspec.configuration.concurrency
       @paths = []
+      @requires = []
+      @init_mode = false
     end
 
     def run
       parse_options
+
+      if @init_mode
+        created = Generators::Init.generate
+        if created.empty?
+          puts "No helper files were created (already exists or not a Rails project)."
+        else
+          created.each { |f| puts "  create #{f}" }
+        end
+        return true
+      end
+
+      load_requires
       load_specs
-      runner = Runner.new(concurrency: @concurrency)
+
+      concurrency = @concurrency || Crspec.configuration.concurrency
+      runner = Runner.new(concurrency: concurrency)
       groups = Crspec.world.example_groups
 
       if groups.empty?
@@ -26,7 +43,7 @@ module Crspec
         return true
       end
 
-      puts "Running Crspec suite with concurrency #{@concurrency}..."
+      puts "Running Crspec suite with concurrency #{concurrency}..."
       runner.run(groups)
 
       puts "\nFinished in #{runner.total_duration.round(4)} seconds"
@@ -54,6 +71,14 @@ module Crspec
           @concurrency = n
         end
 
+        opts.on("-r", "--require PATH", String, "Require a file before running specs") do |path|
+          @requires << path
+        end
+
+        opts.on("--init", "Initialize spec_helper.rb (and rails_helper.rb if Rails project)") do
+          @init_mode = true
+        end
+
         opts.on("-h", "--help", "Show help") do
           puts opts
           exit 0
@@ -62,6 +87,12 @@ module Crspec
 
       @paths = parser.parse(@args)
       @paths = ["spec"] if @paths.empty?
+    end
+
+    def load_requires
+      @requires.each do |req|
+        require req
+      end
     end
 
     def load_specs

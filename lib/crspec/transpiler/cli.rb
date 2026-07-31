@@ -25,7 +25,7 @@ module Crspec
         when :write
           write_paths(@paths)
         else
-          puts "Usage: crspec-transpile [--analyze|--write] <files or directories>"
+          Rails.logger.debug "Usage: crspec-transpile [--analyze|--write] <files or directories>"
         end
       end
 
@@ -75,14 +75,14 @@ module Crspec
           rewriter.transpile
           next if rewriter.warnings.empty?
 
-          puts "File: #{file}"
+          Rails.logger.debug { "File: #{file}" }
           rewriter.warnings.each do |w|
-            puts "  #{w}"
+            Rails.logger.debug { "  #{w}" }
             total_warnings += 1
           end
         end
 
-        puts "Analysis complete. Total warnings found: #{total_warnings}"
+        Rails.logger.debug { "Analysis complete. Total warnings found: #{total_warnings}" }
       end
 
       def write_paths(paths)
@@ -97,11 +97,11 @@ module Crspec
           next unless new_code != content
 
           File.write(file, new_code)
-          puts "Transpiled: #{file}"
+          Rails.logger.debug { "Transpiled: #{file}" }
           count += 1
         end
 
-        puts "Transpilation complete. Updated #{count} file(s)."
+        Rails.logger.debug { "Transpilation complete. Updated #{count} file(s)." }
       end
     end
   end

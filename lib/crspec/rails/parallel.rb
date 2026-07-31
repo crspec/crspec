@@ -22,7 +22,7 @@ module Crspec
           @setup_blocks ||= []
           @teardown_blocks ||= []
 
-          return unless block_given?
+          return unless block
 
           instance_eval(&block)
         end

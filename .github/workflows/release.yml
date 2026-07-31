@@ -2,8 +2,13 @@ name: Release Gem
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
+      - master
+    paths:
+      - 'lib/crspec/version.rb'
+  tags:
+    - 'v*'
   workflow_dispatch:
 
 permissions:

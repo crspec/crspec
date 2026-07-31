@@ -49,8 +49,8 @@ mise exec -- ruby benchmark/run.rb
 Results Summary:
 Framework Engine                              | Duration (s) | Throughput (ops/s)
 ------------------------------------------------------------------------------
-Crspec (Native Default Runner)                | 0.0204       | 4913.52        
-RSpec (Native Default Runner)                 | 0.1370       | 729.77         
-Minitest (Native Default Runner)              | 0.1273       | 785.51         
+Crspec (Native Default Runner)                | 0.0211       | 4749.47        
+RSpec (Native Default Runner)                 | 0.1375       | 727.15         
+Minitest (Native Default Runner)              | 0.1259       | 794.45         
 ==============================================================================
 ```
