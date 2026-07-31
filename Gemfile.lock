@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    crspec (0.1.4)
+    crspec (0.1.5)
       prism (>= 0.19.0)
 
 GEM
@@ -42,6 +42,7 @@ GEM
 PLATFORMS
   arm64-darwin-23
   universal-java-26
+  x86_64-linux
 
 DEPENDENCIES
   async (>= 2.0)
@@ -53,7 +54,7 @@ DEPENDENCIES
 CHECKSUMS
   async (2.44.0) sha256=888e0edda9643fac7bbdfd3073fee1713d62a586dbebaefbcc579e505c166a5a
   console (1.37.0) sha256=8093b286c2595a063849c098594fee5155ecc7967d36f3aa8cbe7569c8f3efd7
-  crspec (0.1.4)
+  crspec (0.1.5)
   diff-lcs (1.6.2) sha256=9ae0d2cba7d4df3075fe8cd8602a8604993efc0dfa934cff568969efb1909962
   fiber-annotation (0.2.0) sha256=7abfadf1d119f508867d4103bf231c0354d019cc39a5738945dec2edadaf6c03
   fiber-local (1.1.0) sha256=c885f94f210fb9b05737de65d511136ea602e00c5105953748aa0f8793489f06

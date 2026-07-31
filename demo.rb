@@ -6,12 +6,16 @@ gemfile do
   source "https://rubygems.org"
   gem "crspec", path: __dir__
   gem "prism"
-  gem "rails", "~> 8.0"
-  gem "sqlite3"
+  # Nothing below exercises ActiveRecord; rails is loaded only to show the
+  # integration boots. sqlite3 is a C extension, so CRuby only.
+  if RUBY_ENGINE == "ruby"
+    gem "rails", "~> 8.0"
+    gem "sqlite3"
+  end
 end
 
 require "crspec"
-require "rails"
+require "rails" if RUBY_ENGINE == "ruby"
 
 puts "================================================================="
 puts "  Crspec Single-File Inline Demo & Feature Verification          "
