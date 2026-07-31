@@ -6,13 +6,16 @@ gemfile do
   source "https://rubygems.org"
   gem "crspec", path: __dir__
   gem "prism"
+  gem "rails", "~> 8.0"
+  gem "sqlite3"
 end
 
 require "crspec"
+require "rails"
 
-Rails.logger.debug "================================================================="
-Rails.logger.debug "  Crspec Single-File Inline Demo & Feature Verification          "
-Rails.logger.debug "================================================================="
+puts "================================================================="
+puts "  Crspec Single-File Inline Demo & Feature Verification          "
+puts "================================================================="
 
 # Reset global state for clean standalone run
 Crspec.reset!
@@ -86,11 +89,11 @@ end
 
 # 3. Rails Parallel Worker Integration (crspec-rails)
 Crspec::Rails::Parallel.parallelize(workers: 4) do
-  parallelize_setup do |worker_num|
-    # Per-worker setup hook (e.g. database setup for worker_num)
+  parallelize_setup do |_worker_num|
+    # Per-worker setup hook
   end
 
-  parallelize_teardown do |worker_num|
+  parallelize_teardown do |_worker_num|
     # Per-worker teardown hook
   end
 end
@@ -105,24 +108,22 @@ rspec_sample_code = <<~RUBY
 RUBY
 
 transpiled = Crspec::Transpiler::Rewriter.new(rspec_sample_code).transpile
-Rails.logger.debug do
-  "[Prism Transpiler Check] RSpec -> Crspec: #{transpiled.include?("Crspec.describe") ? "PASSED" : "FAILED"}"
-end
+puts "[Prism Transpiler Check] RSpec -> Crspec: #{transpiled.include?("Crspec.describe") ? "PASSED" : "FAILED"}"
 
 # 5. Concurrent Multi-Threaded Execution Kernel
-Rails.logger.debug "\n[Executing Specs Concurrently Across 4 Worker Threads]..."
+puts "\n[Executing Specs Concurrently Across 4 Worker Threads]..."
 runner = Crspec::Runner.new(concurrency: 4)
 runner.run(Crspec.world.example_groups)
 
-Rails.logger.debug "\n---------------- Execution Summary ----------------"
-Rails.logger.debug { "Total Duration : #{runner.total_duration.round(4)}s" }
-Rails.logger.debug { "Passed Examples: #{runner.passed_examples.size}" }
-Rails.logger.debug { "Failed Examples: #{runner.failed_examples.size}" }
-Rails.logger.debug "---------------------------------------------------"
+puts "\n---------------- Execution Summary ----------------"
+puts "Total Duration : #{runner.total_duration.round(4)}s"
+puts "Passed Examples: #{runner.passed_examples.size}"
+puts "Failed Examples: #{runner.failed_examples.size}"
+puts "---------------------------------------------------"
 
 if runner.success?
-  Rails.logger.debug "\nSUCCESS: All specs executed concurrently across 4 worker threads and passed cleanly!"
+  puts "\nSUCCESS: All specs executed concurrently across 4 worker threads and passed cleanly!"
 else
-  Rails.logger.debug "\nFAILURE: Some specs failed."
+  puts "\nFAILURE: Some specs failed."
   exit 1
 end
