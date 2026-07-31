@@ -21,7 +21,7 @@ Gem::Specification.new do |spec|
   spec.files = if File.exist?(File.join(__dir__, ".git"))
                  IO.popen(%w[git ls-files -z], chdir: __dir__, err: IO::NULL) do |ls|
                    ls.read.split("\x0").reject do |f|
-                     (f == gemspec) || f.start_with?(*%w[bin/ Gemfile .gitignore .github/ .rubocop.yml])
+                     (f == gemspec) || f.start_with?(*%w[bin/ Gemfile .gitignore .github/ .rubocop.yml samples/ test/ benchmark/ demo.rb])
                    end
                  end
                else
