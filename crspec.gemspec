@@ -18,12 +18,16 @@ Gem::Specification.new do |spec|
   spec.metadata["source_code_uri"] = spec.homepage
 
   gemspec = File.basename(__FILE__)
-  spec.files = IO.popen(%w[git ls-files -z], chdir: __dir__, err: IO::NULL) do |ls|
-    ls.each_line("\x0", chomp: true).reject do |f|
-      (f == gemspec) ||
-        f.start_with?(*%w[bin/ Gemfile .gitignore .github/ .rubocop.yml])
-    end
-  end
+  spec.files = if File.exist?(File.join(__dir__, ".git"))
+                 IO.popen(%w[git ls-files -z], chdir: __dir__, err: IO::NULL) do |ls|
+                   ls.read.split("\x0").reject do |f|
+                     (f == gemspec) || f.start_with?(*%w[bin/ Gemfile .gitignore .github/ .rubocop.yml])
+                   end
+                 end
+               else
+                 Dir["{lib,exe}/**/*", "README.md", "LICENSE.txt"].select { |f| File.file?(f) }
+               end
+
   spec.bindir = "exe"
   spec.executables = %w[crspec crspec-transpile]
   spec.require_paths = ["lib"]
