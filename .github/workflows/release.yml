@@ -7,8 +7,8 @@ on:
       - master
     paths:
       - 'lib/crspec/version.rb'
-  tags:
-    - 'v*'
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 permissions:
