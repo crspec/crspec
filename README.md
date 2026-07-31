@@ -20,13 +20,13 @@
 Add `crspec` to your application's `Gemfile`:
 
 ```ruby
-gem "crspec", github: "crspec/crspec"
+gem "crspec"
 ```
 
 Then install via Bundler (or `mise`):
 
 ```bash
-mise exec -- bundle install
+bundle install
 ```
 
 ---
@@ -36,7 +36,7 @@ mise exec -- bundle install
 Initialize standard `spec_helper.rb` (and `rails_helper.rb` if run within a Rails project):
 
 ```bash
-mise exec -- crspec --init
+ crspec --init
 ```
 
 Spec files include helpers explicitly via standard `require` statements:
@@ -183,10 +183,10 @@ Use the built-in Prism-powered transpiler CLI to convert legacy RSpec suites to 
 
 ```bash
 # 1. Analyze your test directory for thread-unsafe patterns (e.g. before(:all))
-mise exec -- crspec-transpile --analyze spec/
+crspec-transpile --analyze spec/
 
 # 2. Automatically transpile RSpec code to Crspec syntax in-place
-mise exec -- crspec-transpile --write spec/
+crspec-transpile --write spec/
 ```
 
 ---
@@ -196,7 +196,7 @@ mise exec -- crspec-transpile --write spec/
 Explore the working sample Rails application in [`samples/book_store`](file:///Users/tachyons/code/crspec/samples/book_store):
 
 ```bash
-mise exec -- ./exe/crspec samples/book_store/spec/
+ ./exe/crspec samples/book_store/spec/
 ```
 
 ---
@@ -207,10 +207,10 @@ Execute your test suite concurrently using the `crspec` executable:
 
 ```bash
 # Run specs with default concurrency (number of CPU cores)
-mise exec -- crspec spec/
+crspec spec/
 
 # Run specs with specific concurrency
-mise exec -- crspec -c 8 spec/models/
+crspec -c 8 spec/models/
 ```
 
 ---
@@ -220,7 +220,7 @@ mise exec -- crspec -c 8 spec/models/
 To run the internal framework unit tests (built with **Minitest**):
 
 ```bash
-mise exec -- bundle exec rake test
+bundle exec rake test
 ```
 
 ---
