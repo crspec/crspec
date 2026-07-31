@@ -30,16 +30,18 @@ class RailsTest < Minitest::Test
   end
 
   def test_rails_parallel_test_setup_and_teardown_hooks
-    setup_called = []
-    teardown_called = []
+    # Thread::Queue: hooks fire concurrently from worker threads, and plain
+    # Array#<< is not atomic on truly parallel runtimes (JRuby).
+    setup_queue = Thread::Queue.new
+    teardown_queue = Thread::Queue.new
 
     Crspec::Rails::Parallel.parallelize(workers: 2) do
       parallelize_setup do |worker_num|
-        setup_called << worker_num
+        setup_queue << worker_num
       end
 
       parallelize_teardown do |worker_num|
-        teardown_called << worker_num
+        teardown_queue << worker_num
       end
     end
 
@@ -56,6 +58,10 @@ class RailsTest < Minitest::Test
     runner.run([group])
 
     assert runner.success?
+    setup_called = []
+    setup_called << setup_queue.pop until setup_queue.empty?
+    teardown_called = []
+    teardown_called << teardown_queue.pop until teardown_queue.empty?
     assert_equal [1, 2], setup_called.sort
     assert_equal [1, 2], teardown_called.sort
   end

@@ -32,6 +32,10 @@ Gem::Specification.new do |spec|
   spec.executables = %w[crspec crspec-transpile]
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "async", ">= 2.0"
   spec.add_dependency "prism", ">= 0.19.0"
+
+  # The fiber tier (--fibers M) requires the async gem, whose io-event C
+  # extension does not build on JRuby/TruffleRuby. It is a soft dependency:
+  # add `gem "async"` to your Gemfile on CRuby to enable it. On JRuby,
+  # threads (-c N) already use all cores.
 end

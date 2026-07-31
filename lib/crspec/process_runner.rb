@@ -17,8 +17,25 @@ module Crspec
 
     attr_reader :passed_examples, :failed_examples, :pending_examples, :total_duration
 
+    # Forking is only meaningful (and only available) on runtimes with a
+    # GVL, i.e. CRuby. On JRuby/TruffleRuby threads already use all cores,
+    # so `-c N` is the multi-core tier there.
+    def self.fork_supported?
+      Process.respond_to?(:fork) && !Process.method(:fork).nil? &&
+        RUBY_ENGINE == "ruby"
+    end
+
     def initialize(processes:, concurrency: Etc.nprocessors, fibers: 1, formatter: nil,
                    fail_fast: false, seed: nil, only_failures: false, persistence_path: nil)
+      unless self.class.fork_supported?
+        raise Crspec::Error, <<~MSG
+          --processes requires fork, which #{RUBY_ENGINE} does not support.
+          On #{RUBY_ENGINE} threads are not limited by a GVL, so worker
+          threads already use all cores: use -c/--concurrency instead
+          (e.g. `crspec -c #{Etc.nprocessors}`).
+        MSG
+      end
+
       @processes = processes == :auto ? physical_core_count : processes
       @concurrency = concurrency
       @fibers = fibers
@@ -67,7 +84,6 @@ module Crspec
       until readers.empty?
         ready, = IO.select(readers.keys)
         ready.each do |io|
-          child = readers[io]
           result = read_result(io)
           if result.nil?
             readers.delete(io)

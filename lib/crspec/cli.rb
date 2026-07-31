@@ -46,6 +46,18 @@ module Crspec
       persistence_path = Crspec.configuration.example_status_persistence_file_path ||
                          File.join("tmp", "crspec_status.json")
       multi_process = @processes == :auto || (@processes.is_a?(Integer) && @processes > 1)
+      if multi_process && !ProcessRunner.fork_supported?
+        if @processes == :auto
+          # auto = "use the best multi-core strategy"; on engines without a
+          # GVL, threads already are that strategy.
+          puts "#{RUBY_ENGINE} has no fork; --processes auto falling back to #{concurrency} threads."
+          multi_process = false
+        else
+          warn "Error: --processes requires fork, which #{RUBY_ENGINE} does not support."
+          warn "On #{RUBY_ENGINE} threads use all cores; use -c/--concurrency instead."
+          return false
+        end
+      end
       runner = if multi_process
                  ProcessRunner.new(processes: @processes, concurrency: concurrency,
                                    fibers: fibers, fail_fast: @fail_fast, seed: @seed,

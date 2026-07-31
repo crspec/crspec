@@ -4,7 +4,12 @@
 
 - **Fiber tier** (`--fibers M`, `config.fibers`): each worker thread runs up
   to M concurrent example-fibers on the Async reactor; IO-bound examples
-  overlap within a thread. `async` is now a runtime dependency.
+  overlap within a thread. `async` is a soft dependency (add it to your
+  Gemfile on CRuby); without it `--fibers` falls back to 1.
+- **JRuby support**: full test suite passes on JRuby 10; threads scale
+  across all cores (no GVL), so `-c N` is the multi-core tier there.
+  `--processes N` raises with guidance (no fork); `--processes auto`
+  gracefully falls back to threads.
 - **Process tier** (`--processes P`, `--processes auto` = physical cores):
   forks after spec loading (`Process.warmup`), shards examples by persisted
   timings (LPT bin-packing, round-robin on first run), streams marshalled
